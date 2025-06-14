@@ -1,0 +1,25 @@
+namespace Models
+{
+    [Table("UF")]
+    [DataContract]
+    public class UF : IEquatable<IUF>, IUF
+    {
+        [Key]
+        [DataMember(Name = "codNacao_uf")]
+        public string codNacao_uf {get; set;}
+        [Key]
+        [DataMember(Name = "Desc_uf")]
+        public string Desc_uf {get; set;}
+        [DataMember(Name = "codIBGE_uf")]
+        public int codIBGE_uf {get; set;}
+        [DataMember(Name = "Nome_uf")]
+        public string Nome_uf {get; set;}
+        [DataMember(Name = "UsrCad_uf")]
+        public string UsrCad_uf {get; set;}
+        [DataMember(Name = "DataCad_uf")]
+        public DateTime DataCad_uf {get; set;}
+        [DataMember(Name = "AtInat_uf")]
+        public byte AtInat_uf {get; set;}
+
+    }
+}

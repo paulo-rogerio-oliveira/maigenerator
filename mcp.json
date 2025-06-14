@@ -1,0 +1,13 @@
+{
+    "mcpServers":      {
+      "my-mcp-server-e9eef363": {
+              "type": "stdio",
+              "command": "dotnet",
+              "args": [
+                  "run",
+                  "--project",
+                  "c:\\projects\\maigenerator\\mygen-api\\mygenapi.csproj"
+              ]
+          }
+    }
+  }
