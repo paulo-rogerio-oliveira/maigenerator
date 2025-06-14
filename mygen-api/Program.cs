@@ -9,11 +9,26 @@ using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 using MyGenApi.Models;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Get base path from command line arguments
+var basePathArg = args.FirstOrDefault(arg => arg.StartsWith("--base-path="));
+if (!string.IsNullOrEmpty(basePathArg))
+{
+    var basePath = basePathArg.Split('=')[1];
+    builder.Configuration["AppSettings:BaseAppPath"] = basePath;
+    Console.WriteLine($"Using base path from command line: {basePath}");
+}
+
+var modelCreationService = new ModelCreationService(@"C:\projects\maigenerator\mygen-api\bin\release\net8.0\win-x64\publish");
+var modelContent = await modelCreationService.CreateModelToolAsync("unidade");
+Console.WriteLine(modelContent);    
+
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
@@ -25,6 +40,7 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
+
 
 builder.Services.AddAntiforgery(options =>
 {
@@ -66,10 +82,8 @@ app.UseAntiforgery();
 app.MapGet("/antiforgery/token", (IAntiforgery antiforgery, HttpContext context) =>
 {
     var tokens = antiforgery.GetAndStoreTokens(context);
-    return Results.Ok(new { token = tokens.RequestToken });
-})
-.WithName("GetAntiforgeryToken")
-.WithOpenApi();
+    return Results.Json(new { token = tokens.RequestToken });
+});
 
 // Update file upload endpoint to handle antiforgery token
 app.MapPost("/file/upload/{type}", async (string type, IFormFile file, IFileUploadService uploadService, HttpContext context, IAntiforgery antiforgery) =>
@@ -248,7 +262,7 @@ app.MapPost("/mcp/repository/generate", async (MCPModelRequest request, HttpCont
         }
 
         var repositoryService = context.RequestServices.GetRequiredService<IRepositoryGenerationService>();
-        var repositoryContent = await repositoryService.GenerateRepositoryAsync(tableName, config.connectionString);
+        var repositoryContent = await repositoryService.GenerateRepositoryAsync(tableName);
         
         return Results.Ok(new MCPResponse
         {
@@ -341,6 +355,8 @@ app.MapPost("/tables", async (TableListRequest req, ITableMetadataService servic
         return Results.Ok(new { success = false, error = ex.Message });
     }
 });
+
+app.MapControllers();
 
 app.Run();
 

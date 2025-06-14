@@ -4,6 +4,8 @@ using MyGenApi.Models;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Text.Json;
+using System.Reflection;
+
 namespace MyGenApi.Services;
 
 [McpServerToolType()]
@@ -11,15 +13,33 @@ public class ModelCreationService : IModelCreationService
 {
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<ModelCreationService> _logger;
+
+    private readonly string _basePath;
     
-    public ModelCreationService()
+    public ModelCreationService(string path)
     {
+        _basePath = path;
     }
 
-    public ModelCreationService(IWebHostEnvironment environment, ILogger<ModelCreationService> logger)
+    public ModelCreationService(IWebHostEnvironment environment, ILogger<ModelCreationService> logger, IConfiguration configuration)
     {
         _environment = environment;
         _logger = logger;
+
+        var appSettings = configuration.GetSection("AppSettings").Get<AppSettings>();
+        var baseAppPath = appSettings?.BaseAppPath;
+
+        if (string.IsNullOrEmpty(baseAppPath))
+        {
+            baseAppPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppDomain.CurrentDomain.BaseDirectory;
+            _logger.LogInformation("Using default executable path as base path: {BasePath}", baseAppPath);
+        }
+        else
+        {
+            _logger.LogInformation("Using configured base path: {BasePath}", baseAppPath);
+        }
+
+        _basePath = baseAppPath;
     }
 
     [McpServerTool, Description("Create a model from a table")]
@@ -27,7 +47,7 @@ public class ModelCreationService : IModelCreationService
     {
         try
         {
-            var configPath = Path.Combine(_environment.ContentRootPath, "App_Data", "config.json");
+            var configPath = Path.Combine(_basePath, "App_Data", "config.json");
             if (!File.Exists(configPath))
             {
                 Console.WriteLine(configPath);
@@ -78,7 +98,7 @@ public class ModelCreationService : IModelCreationService
         try
         {
             // Read the model template file
-            var modelTemplatePath = Path.Combine(_environment.ContentRootPath, "uploads", "model.txt");
+            var modelTemplatePath = Path.Combine(_basePath, "uploads", "model.txt");
             if (!File.Exists(modelTemplatePath))
             {
                 throw new FileNotFoundException("Model template file not found");

@@ -4,6 +4,7 @@ using MyGenApi.Models;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Text.Json;
+using System.Reflection;
 
 namespace MyGenApi.Services;
 
@@ -12,29 +13,61 @@ public class RepositoryGenerationService : IRepositoryGenerationService
 {
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<RepositoryGenerationService> _logger;
+    private readonly string _basePath;
 
-    public RepositoryGenerationService(IWebHostEnvironment environment, ILogger<RepositoryGenerationService> logger)
+    public RepositoryGenerationService(IWebHostEnvironment environment, ILogger<RepositoryGenerationService> logger, IConfiguration configuration)
     {
         _environment = environment;
         _logger = logger;
+
+        var appSettings = configuration.GetSection("AppSettings").Get<AppSettings>();
+        var baseAppPath = appSettings?.BaseAppPath;
+
+        if (string.IsNullOrEmpty(baseAppPath))
+        {
+            baseAppPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppDomain.CurrentDomain.BaseDirectory;
+            _logger.LogInformation("Using default executable path as base path: {BasePath}", baseAppPath);
+        }
+        else
+        {
+            _logger.LogInformation("Using configured base path: {BasePath}", baseAppPath);
+        }
+
+        _basePath = baseAppPath;
     }
 
     [McpServerTool, Description("Generate a repository for a table")]
-    public async Task<string> GenerateRepositoryAsync(string tableName, string connectionString)
+    public async Task<string> GenerateRepositoryAsync(string tableName)
     {
         try
         {
             // Read the repository template file
-            var templatePath = Path.Combine(_environment.ContentRootPath, "uploads", "repository.txt");
+            var templatePath = Path.Combine(_basePath, "uploads", "repository.txt");
             if (!File.Exists(templatePath))
             {
                 throw new FileNotFoundException("Repository template file not found");
             }
+            
+            var configPath = Path.Combine(_basePath, "App_Data", "config.json");
+            if (!File.Exists(configPath))
+            {
+                Console.WriteLine(configPath);
+                return JsonSerializer.Serialize(new MCPResponse
+                {
+                    Success = false,
+                    Error = "Configuration file not found in App_Data directory"
+                });
+            }
+
+            var configJson = await File.ReadAllTextAsync(configPath);
+            var config = JsonSerializer.Deserialize<ConfigFile>(configJson);
+            Console.WriteLine(configJson);
+            
             var template = await File.ReadAllTextAsync(templatePath);
 
             // Get table metadata
-            var columns = await GetTableColumnsAsync(tableName, connectionString);
-            var primaryKeys = await GetPrimaryKeysAsync(tableName, connectionString);
+            var columns = await GetTableColumnsAsync(tableName, config.connectionString);
+  
 
             // Create repository content
             var repositoryContent = new System.Text.StringBuilder();
@@ -45,11 +78,7 @@ public class RepositoryGenerationService : IRepositoryGenerationService
             repositoryContent.AppendLine(template);
             repositoryContent.AppendLine();
             repositoryContent.AppendLine("// Table Metadata:");
-            repositoryContent.AppendLine("// Primary Keys:");
-            foreach (var pk in primaryKeys)
-            {
-                repositoryContent.AppendLine($"// - {pk}");
-            }
+                       
             repositoryContent.AppendLine("// Columns:");
             foreach (var column in columns)
             {

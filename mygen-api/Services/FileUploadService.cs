@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System.Reflection;
 
 namespace MyGenApi.Services;
 
@@ -21,9 +22,9 @@ public class FileUploadService : IFileUploadService
         }
 
         // Create directory if it doesn't exist
-        var uploadDir = Path.Combine(_environment.ContentRootPath, "uploads");
+        var uploadDir = Path.Combine(Path.GetDirectoryName((Assembly.GetExecutingAssembly().Location)), "uploads");
         Directory.CreateDirectory(uploadDir);
-
+        Console.WriteLine($"uploadDir: {uploadDir}");
         // Use fixed filenames based on type
         var fileName = type == "model" ? "model.txt" : "repository.txt";
         var filePath = Path.Combine(uploadDir, fileName);
