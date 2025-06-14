@@ -7,7 +7,11 @@ project.lock.json
 nupkg/
 
 # Visual Studio Code
-.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 # User-specific files
 *.suo
@@ -62,4 +66,26 @@ msbuild.wrn
 # App_Data
 App_Data/config.json
 **/App_Data/config.json
-**/config.json 
+**/config.json
+
+# Frontend
+mygen-frontend/node_modules/
+mygen-frontend/dist/
+mygen-frontend/build/
+mygen-frontend/.env
+mygen-frontend/.env.local
+mygen-frontend/.env.development.local
+mygen-frontend/.env.test.local
+mygen-frontend/.env.production.local
+mygen-frontend/npm-debug.log*
+mygen-frontend/yarn-debug.log*
+mygen-frontend/yarn-error.log*
+mygen-frontend/.pnp
+mygen-frontend/.pnp.js
+mygen-frontend/coverage/
+mygen-frontend/.next/
+mygen-frontend/out/
+mygen-frontend/.DS_Store
+mygen-frontend/*.pem
+mygen-frontend/.vercel
+mygen-frontend/.turbo 
