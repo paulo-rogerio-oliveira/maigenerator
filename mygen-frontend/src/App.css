@@ -1,0 +1,192 @@
+body {
+  background: #f7f9fb;
+  font-family: system-ui, 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #222;
+}
+
+.App {
+  min-height: 100vh;
+  background: #f7f9fb;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  padding: 0 1.5rem;
+  min-height: 56px;
+  border-radius: 0 0 8px 8px;
+  margin-bottom: 1.5rem;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.navbar-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.navbar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-tabs button {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 8px 20px;
+  margin: 0 2px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  font-weight: 500;
+  border-radius: 4px 4px 0 0;
+  transition: background 0.15s, color 0.15s, border-bottom 0.15s;
+}
+
+.navbar-tabs button.active, .navbar-tabs button:focus {
+  color: #1976d2;
+  background: #e3eefd;
+  border-bottom: 2px solid #1976d2;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 24px 18px 18px 18px;
+  margin: 2rem auto;
+  max-width: 768px;
+  transition: box-shadow 0.2s;
+  position: relative;
+}
+
+.card h2 {
+  margin-top: 0;
+  color: #1976d2;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+label {
+  font-weight: 500;
+  color: #222;
+  margin-bottom: 4px;
+  display: block;
+}
+
+input[type="text"], textarea, select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 1rem;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  background: #f9fafb;
+  transition: border 0.15s;
+  box-sizing: border-box;
+}
+
+input[type="text"]:focus, textarea:focus, select:focus {
+  border: 1.5px solid #1976d2;
+  outline: none;
+  background: #fff;
+}
+
+select[multiple] {
+  min-height: 90px;
+  font-size: 1rem;
+  background: #f6f8fa;
+}
+
+button {
+  padding: 8px 20px;
+  font-size: 1rem;
+  border-radius: 4px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+button:hover, button:focus {
+  background: #1251a3;
+  color: #fff;
+}
+
+.card button[disabled] {
+  background: #b3c6e6;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+pre {
+  background: #23272e;
+  color: #e3e9f7;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.98rem;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  overflow-x: auto;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.card .copy-btn {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 2;
+  padding: 5px 14px;
+  font-size: 13px;
+  border-radius: 4px;
+  background: #e3eefd;
+  color: #1976d2;
+  border: 1px solid #b3c6e6;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.card .copy-btn:hover, .card .copy-btn:focus {
+  background: #1976d2;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 10px 2px 8px 2px;
+    max-width: 98vw;
+  }
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 0.5rem;
+    min-height: 44px;
+  }
+  .navbar-logo {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .navbar-tabs button {
+    font-size: 14px;
+    padding: 6px 8px;
+  }
+}
