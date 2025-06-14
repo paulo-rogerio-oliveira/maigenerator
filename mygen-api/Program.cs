@@ -28,18 +28,20 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddAntiforgery(options =>
 {
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.Cookie.Name = "XSRF-TOKEN";
 });
 
-
-
+builder.WebHost.UseUrls($"http://*:5186");
 
 builder.Services.AddScoped<ITableMetadataService, TableMetadataService>();
 builder.Services.AddHttpClient<ICodeGenService, CodeGenService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddScoped<IModelCreationService, ModelCreationService>();
+builder.Services.AddScoped<IRepositoryGenerationService, RepositoryGenerationService>();
 builder.Services.AddMcpServer().WithStdioServerTransport().WithToolsFromAssembly();
 
 var app = builder.Build();
@@ -51,8 +53,51 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
-app.UseHttpsRedirection();
+// Configure CORS with credentials
+app.UseCors(x => x
+    .SetIsOriginAllowed(origin => true)
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .AllowCredentials());
+
+app.UseAntiforgery();
+
+// Add antiforgery token endpoint
+app.MapGet("/antiforgery/token", (IAntiforgery antiforgery, HttpContext context) =>
+{
+    var tokens = antiforgery.GetAndStoreTokens(context);
+    return Results.Ok(new { token = tokens.RequestToken });
+})
+.WithName("GetAntiforgeryToken")
+.WithOpenApi();
+
+// Update file upload endpoint to handle antiforgery token
+app.MapPost("/file/upload/{type}", async (string type, IFormFile file, IFileUploadService uploadService, HttpContext context, IAntiforgery antiforgery) =>
+{
+    try
+    {
+        await antiforgery.ValidateRequestAsync(context);
+
+        if (file == null || file.Length == 0)
+        {
+            return Results.BadRequest("No file was uploaded");
+        }
+
+        if (type != "model" && type != "repository")
+        {
+            return Results.BadRequest("Invalid file type. Must be 'model' or 'repository'");
+        }
+
+        var fileName = await uploadService.UploadFileAsync(file, type);
+        return Results.Ok(new { fileName });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
+})
+.WithName("UploadFile")
+.WithOpenApi();
 
 // MCP Tool endpoints
 app.MapGet("/mcp/tools", () =>
@@ -67,14 +112,19 @@ app.MapGet("/mcp/tools", () =>
                 description = "Creates a model from a database table",
                 version = "1.0.0",
                 endpoint = "/mcp/model/create"
+            },
+            new
+            {
+                name = "repository-generator",
+                description = "Generates a repository for a database table",
+                version = "1.0.0",
+                endpoint = "/mcp/repository/generate"
             }
         }
     });
 })
 .WithName("MCPTools")
 .WithOpenApi();
-
-Func<string> getFolder = () => Path.Combine(app.Environment.ContentRootPath, "App_Data");
 
 app.MapPost("/mcp/model/create", async (MCPModelRequest request, HttpContext context) =>
 {
@@ -151,6 +201,78 @@ app.MapPost("/mcp/model/create", async (MCPModelRequest request, HttpContext con
 .WithName("MCPModelCreate")
 .WithOpenApi();
 
+app.MapPost("/mcp/repository/generate", async (MCPModelRequest request, HttpContext context) =>
+{
+    string? tableName = null;
+    try
+    {
+        if (request != null && !string.IsNullOrWhiteSpace(request.TableName))
+        {
+            tableName = request.TableName;
+        }
+        else
+        {
+            tableName = context.Request.Query["tableName"].ToString();
+        }
+
+        if (string.IsNullOrWhiteSpace(tableName))
+        {
+            return Results.BadRequest(new MCPResponse
+            {
+                Success = false,
+                Error = "Table name must be provided in the body or as a query parameter."
+            });
+        }
+
+        var configPath = Path.Combine(app.Environment.ContentRootPath, "App_Data", "config.json");
+        if (!File.Exists(configPath))
+        {
+            Console.WriteLine(configPath);
+            return Results.BadRequest(new MCPResponse
+            {
+                Success = false,
+                Error = "Configuration file not found in App_Data directory"
+            });
+        }
+
+        var configJson = await File.ReadAllTextAsync(configPath);
+        var config = JsonSerializer.Deserialize<ConfigFile>(configJson);
+        Console.WriteLine(configJson);
+        if (string.IsNullOrEmpty(config?.connectionString))
+        {
+            return Results.BadRequest(new MCPResponse
+            {
+                Success = false,
+                Error = "Connection string not found in configuration file"
+            });
+        }
+
+        var repositoryService = context.RequestServices.GetRequiredService<IRepositoryGenerationService>();
+        var repositoryContent = await repositoryService.GenerateRepositoryAsync(tableName, config.connectionString);
+        
+        return Results.Ok(new MCPResponse
+        {
+            Success = true,
+            Data = new
+            {
+                Content = repositoryContent,
+                TableName = tableName,
+                GeneratedAt = DateTime.UtcNow
+            }
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new MCPResponse
+        {
+            Success = false,
+            Error = ex.Message
+        });
+    }
+})
+.WithName("MCPRepositoryGenerate")
+.WithOpenApi();
+
 app.MapPost("/metadata/{tableName}", async (string tableName, TableListRequest req, ITableMetadataService service) =>
 {
     var columns = await service.GetColumnsAsync(tableName, req.ConnectionString);
@@ -219,41 +341,6 @@ app.MapPost("/tables", async (TableListRequest req, ITableMetadataService servic
         return Results.Ok(new { success = false, error = ex.Message });
     }
 });
-
-app.MapGet("/antiforgery/token", (IAntiforgery antiforgery, HttpContext context) =>
-{
-    var tokens = antiforgery.GetAndStoreTokens(context);
-    return Results.Ok(new { token = tokens.RequestToken });
-})
-.WithName("GetAntiforgeryToken")
-.WithOpenApi();
-
-app.MapPost("/file/upload/{type}", async (string type, IFormFile file, IFileUploadService uploadService) =>
-{
-    try
-    {
-        if (file == null || file.Length == 0)
-        {
-            return Results.BadRequest("No file was uploaded");
-        }
-
-        if (type != "model" && type != "repository")
-        {
-            return Results.BadRequest("Invalid file type. Must be 'model' or 'repository'");
-        }
-
-        var fileName = await uploadService.UploadFileAsync(file, type);
-        return Results.Ok(new { fileName });
-    }
-    catch (Exception ex)
-    {
-        return Results.BadRequest(new { error = ex.Message });
-    }
-})
-.WithName("UploadFile")
-.WithOpenApi();
-var modelCreationService = new ModelCreationService();
-
 
 app.Run();
 

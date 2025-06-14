@@ -1,25 +1,100 @@
-namespace Models
+﻿using Globaltec.UAU.Dal.Dapper.Attributes;
+using Globaltec.UAU.Dal.Interfaces.Entity;
+using System;
+using System.Runtime.Serialization;
+
+namespace Globaltec.UAU.Dal.Entity.Models
 {
-    [Table("UF")]
     [DataContract]
-    public class UF : IEquatable<IUF>, IUF
+    [Table("Pessoas")]
+    public class Pessoas : IPessoas
     {
         [Key]
-        [DataMember(Name = "codNacao_uf")]
-        public string codNacao_uf {get; set;}
-        [Key]
-        [DataMember(Name = "Desc_uf")]
-        public string Desc_uf {get; set;}
-        [DataMember(Name = "codIBGE_uf")]
-        public int codIBGE_uf {get; set;}
-        [DataMember(Name = "Nome_uf")]
-        public string Nome_uf {get; set;}
-        [DataMember(Name = "UsrCad_uf")]
-        public string UsrCad_uf {get; set;}
-        [DataMember(Name = "DataCad_uf")]
-        public DateTime DataCad_uf {get; set;}
-        [DataMember(Name = "AtInat_uf")]
-        public byte AtInat_uf {get; set;}
+        [DataMember(Name = "cod_pes")]
+        public int Cod_pes { get; set; }
 
+        [DataMember(Name = "nome_pes")]
+        public string Nome_pes { get; set; }
+
+        [DataMember(Name = "tipo_pes")]
+        public byte? Tipo_pes { get; set; }
+
+        [DataMember(Name = "cpf_pes")]
+        public string Cpf_pes { get; set; }
+
+        [DataMember(Name = "dtcad_pes")]
+        public DateTime? Dtcad_pes { get; set; }
+
+        [DataMember(Name = "dtnasc_pes")]
+        public DateTime? Dtnasc_pes { get; set; }
+
+        [DataMember(Name = "IntExt_pes")]
+        public byte IntExt_pes { get; set; }
+
+        [DataMember(Name = "UsrCad_pes")]
+        public string UsrCad_pes { get; set; }
+
+        [DataMember(Name = "UsrAlt_pes")]
+        public string UsrAlt_pes { get; set; }
+
+        [DataMember(Name = "Status_pes")]
+        public byte Status_pes { get; set; }
+
+        [DataMember(Name = "Tratamento_pes")]
+        public string Tratamento_pes { get; set; }
+
+        [DataMember(Name = "Email_pes")]
+        public string Email_pes { get; set; }
+
+        [DataMember(Name = "EndWWW_pes")]
+        public string EndWWW_pes { get; set; }
+
+        [DataMember(Name = "Matricula_Pes")]
+        public string Matricula_Pes { get; set; }
+
+        [DataMember(Name = "AtInat_pes")]
+        public byte AtInat_pes { get; set; }
+
+        [DataMember(Name = "DataAlt_pes")]
+        public DateTime DataAlt_pes { get; set; }
+
+        [DataMember(Name = "NomeFant_Pes")]
+        public string NomeFant_Pes { get; set; }
+
+        [DataMember(Name = "Anexos_pes")]
+        public byte Anexos_pes { get; set; }
+
+        [DataMember(Name = "InscrMunic_pes")]
+        public string InscrMunic_pes { get; set; }
+
+        [DataMember(Name = "Inscrest_pes")]
+        public string Inscrest_pes { get; set; }
+
+        [DataMember(Name = "Login_pes")]
+        public string Login_pes { get; set; }
+
+        [DataMember(Name = "Senha_pes")]
+        public string Senha_pes { get; set; }
+
+        [DataMember(Name = "CNAE_pes")]
+        public string CNAE_pes { get; set; }
+
+        [DataMember(Name = "DataCadPortal_pes")]
+        public DateTime DataCadPortal_pes { get; set; }
+
+        [DataMember(Name = "CadastradoPrefeituraGyn_pes")]
+        public bool CadastradoPrefeituraGyn_pes { get; set; }
+
+        [DataMember(Name = "HabilitadoRiscoSacado_pes")]
+        public bool HabilitadoRiscoSacado_pes { get; set; }
+
+        [DataMember(Name = "CEI_Pes")]
+        public string CEI_Pes { get; set; }
+
+        [DataMember(Name = "IntegradoEDI_pes")]
+        public int IntegradoEDI_pes { get; set; }
+
+        [DataMember(Name = "BloqueioLgpd_Pes")]
+        public int BloqueioLgpd_Pes { get; set; }
     }
 }

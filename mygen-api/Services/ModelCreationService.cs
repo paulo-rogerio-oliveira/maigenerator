@@ -12,27 +12,22 @@ public class ModelCreationService : IModelCreationService
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<ModelCreationService> _logger;
     
-      public ModelCreationService()
+    public ModelCreationService()
     {
-
     }
-   public ModelCreationService(IWebHostEnvironment environment, ILogger<ModelCreationService> logger)
+
+    public ModelCreationService(IWebHostEnvironment environment, ILogger<ModelCreationService> logger)
     {
         _environment = environment;
         _logger = logger;
     }
 
-     [McpServerTool, Description("Create a model from a table")]
+    [McpServerTool, Description("Create a model from a table")]
     public async Task<string> CreateModelToolAsync(string tableName)
     {
-    
         try
         {
-            // Try to read from body
-
-           
-
-            var configPath = Path.Combine(@"C:\projects\maigenerator\mygen-api", "App_Data", "config.json");
+            var configPath = Path.Combine(_environment.ContentRootPath, "App_Data", "config.json");
             if (!File.Exists(configPath))
             {
                 Console.WriteLine(configPath);
@@ -55,7 +50,6 @@ public class ModelCreationService : IModelCreationService
                 });
             }
 
-      
             var modelContent = await CreateModelFromTableAsync(tableName, config.connectionString);
             
             return JsonSerializer.Serialize(new MCPResponse
